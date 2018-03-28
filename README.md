@@ -25,6 +25,6 @@ tries to leave the board.
 
 ## References and interesting links
 
-  - [Demystifying Deep Reinforcement Learning](ttp://www.nervanasys.com/demystifying-deep-reinforcement-learning/)
+  - [Demystifying Deep Reinforcement Learning](http://www.nervanasys.com/demystifying-deep-reinforcement-learning/)
   - [Artificial Intelligence: Q-learning](http://artint.info/html/ArtInt_265.html)
 
