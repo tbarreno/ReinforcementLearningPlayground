@@ -23,8 +23,8 @@ if __name__ == "__main__":
     verbose = False
 
     # Board size
-    board_height = 7
-    board_width = 7
+    board_height = 4
+    board_width = 4
 
     # Build the game
     the_game = gaming.SeekGame(board_height, board_width)
