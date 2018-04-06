@@ -1,4 +1,4 @@
-# Q-Learning Playground project
+# Reinforcement-Learning Playground project
 
 ## Introduction
 
@@ -11,7 +11,25 @@ It's heavily based on the
 from [Eder Santana](http://edersantana.github.io/). This project is
 simply enough for understanding **Q-Learning** and try some variations.
 
-## First step: changing the game
+## The project structure
+
+The `gaming.py` module contains just a class that represents the board with the
+player and target position. This class also is responsible for calculating the
+reward for each movement.
+
+The game creation only requires the size of the board (a 4x4 board as default).
+
+Having the game in a independent class allows us to change the gaming behaviour
+independently from the learning part.
+
+The `learning.py` module have the model build and the *experience replay*
+classes.
+
+Finally, `train-model.py` is an executable script that builds the module and
+run a 100 epochs episode. It saves the trained model and loads it before
+training if it exists. It also saves a CSV file with the training statistics.
+
+## Seek: the game
 
 In [Keras plays Catch](http://edersantana.github.io/articles/keras_rl/), the
 game consists in catching "*falling fruit*" with a basket that can move along
