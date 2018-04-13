@@ -67,6 +67,16 @@ class SeekGame(object):
         self.player_x = x_point
         self.player_y = y_point
 
+    def set_player_position(self, x, y):
+        """Sets the player possition."""
+        self.player_x = x
+        self.player_y = y
+
+    def set_target_position(self, x, y):
+        """Sets the target possition."""
+        self.target_x = x
+        self.target_y = y
+
     def move(self, direction):
         """Move the player. A 'soft penalty' is applied when hitting the
         borders."""

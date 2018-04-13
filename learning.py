@@ -12,6 +12,9 @@ from keras.optimizers import sgd
 
 import numpy as np
 import os.path
+import time
+
+import gaming
 
 
 # ---------------------------------------------------------------------------
@@ -89,12 +92,13 @@ class ExperienceReplay(object):
 class ModelBuilder(object):
     """This class hides the model build."""
 
-    def __init__(self, width=4, height=4, weights_directory="model_weights"):
+    def __init__(self, name="", width=4, height=4, weights_directory="model_weights"):
         """Initialization: properties of the model"""
 
         self.epsilon = .1  # exploration
         self.num_actions = 4  # [up, right, down, left]
         self.hidden_size = 100
+        self.name=name
 
         self.model = Sequential()
         self.model.add(Dense(self.hidden_size,
@@ -104,8 +108,10 @@ class ModelBuilder(object):
         self.model.add(Dense(self.num_actions))
         self.model.compile(sgd(lr=.2), "mse")
 
+        self.weights_directory = weights_directory
+
         self.model_file = os.path.join(weights_directory,
-                                       f"model_weights-{height}x{width}.h5")
+                                       f"model_weights{name}.h5")
 
     def load_weights(self):
         """Load the model weights if the file exists"""
@@ -116,6 +122,12 @@ class ModelBuilder(object):
 
     def save_weights(self):
         """Save the model weights to a file"""
+
+        # Directory creation
+        if not os.path.exists(self.weights_directory):
+            os.mkdir(self.weights_directory)
+
+        # Save the model weights
         self.model.save_weights(self.model_file)
 
     def get_real_model(self):
@@ -141,3 +153,127 @@ class ModelBuilder(object):
         """Just run the model's 'train_on_batch'..."""
 
         return self.model.train_on_batch(inputs, targets)
+
+
+# ---------------------------------------------------------------------------
+# Episode method
+# ---------------------------------------------------------------------------
+
+def run_episode(name="", epochs=100, board_height=4, board_width=4,
+                verbose=False):
+    """Run an episode (several epochs)"""
+
+    # Episode parameters
+    batch_size = 50
+
+    # Stats directory
+    stats_directory = "stats"
+
+    # Build the game
+    the_game = gaming.SeekGame(board_height, board_width)
+    the_game.reset()
+
+    # Build the model
+    print("Building the model...")
+    model = ModelBuilder(name, the_game.width, the_game.height)
+    model.load_weights()
+    print("Model ready.")
+
+    # Build the memory
+    exp_replay = ExperienceReplay()
+
+    # Reset the winning count
+    win_cnt = 0
+
+    # Start time
+    start_time = time.time()
+
+    # Train loop (over the epochs)
+    for e in range(epochs):
+        loss = 0.0
+        the_game.reset()
+        game_over = False
+
+        if verbose:
+            print("--- Board representation:")
+            x = the_game.get_board()
+            print(f"{x}")
+
+        # Get initial input
+        input_t = the_game.get_board_vector()
+
+        while not game_over:
+            # print("--- Board ---")
+            # x = the_game.get_board()
+            # print("{}".format(x))
+
+            input_tm1 = input_t
+
+            # Get the next action
+            action = model.next_action(input_tm1)
+
+            # apply action, get rewards and new state
+            # Move the player on the board
+            the_game.move(action)
+
+            # Get the resulting board, reward and if the game is over
+            input_t = the_game.get_board_vector()
+            reward = the_game.get_reward()
+            game_over = the_game.is_over()
+
+            # Have we won?
+            if reward >= 1.0:
+                win_cnt += 1
+
+            # Remember this movement
+            exp_replay.remember([input_tm1, action, reward, input_t], game_over)
+
+            # Adapt model: train a memory batch
+            inputs, targets = exp_replay.get_batch(model.get_real_model(),
+                                                   batch_size=batch_size)
+            loss += model.train_on_batch(inputs, targets)
+
+        # End time
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        has_won = the_game.get_reward() >= 1.0
+
+        # Just for testing...
+        if verbose:
+            if has_won:
+                print(f" WIN  ({the_game.get_reward()})")
+            else:
+                print(f" LOSE ({the_game.get_reward()})")
+
+        # Episode summary
+        print(f"Epoch {(e+1):03d}/{epochs:03d} | Loss {loss:.4f} |"
+              f" win={has_won:d} | Win count {win_cnt}")
+
+    print("----")
+    print(f"Elapsed time {elapsed_time:.3f}")
+
+    # Save the model
+    model.save_weights()
+
+    # Directory
+    if not os.path.exists(stats_directory):
+        os.mkdir(stats_directory)
+
+    statistics_file = os.path.join(stats_directory, f"stats{name}.csv")
+
+    # Load previous data (or create an empty dataset)
+    if os.path.exists(statistics_file):
+        with open(statistics_file) as s_f:
+            data = s_f.readlines()
+    else:
+        data = [f"Episode,Epochs,WinCount,WinPct,Loss,Time\n"]
+
+    # Creates a new stat entry
+    data.append(f"{len(data):d},{epochs:d},{win_cnt:d},"
+                f"{(win_cnt / epochs):.3f},{loss:.6f},{elapsed_time:.3f}\n")
+
+    # Save the data
+    with open(statistics_file, "w") as s_f:
+        s_f.writelines(data)
+
