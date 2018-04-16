@@ -92,7 +92,7 @@ class ExperienceReplay(object):
 class ModelBuilder(object):
     """This class hides the model build."""
 
-    def __init__(self, name="", width=4, height=4, weights_directory="model_weights"):
+    def __init__(self, name=None, width=4, height=4, weights_directory="model_weights"):
         """Initialization: properties of the model"""
 
         self.epsilon = .1  # exploration
@@ -110,8 +110,13 @@ class ModelBuilder(object):
 
         self.weights_directory = weights_directory
 
+        if name:
+            suffix = f"-{name}"
+        else:
+            suffix = ""
+
         self.model_file = os.path.join(weights_directory,
-                                       f"model_weights{name}.h5")
+                                       f"model_weights{suffix}.h5")
 
     def load_weights(self):
         """Load the model weights if the file exists"""
@@ -119,6 +124,8 @@ class ModelBuilder(object):
         # Look for the weights file
         if os.path.exists(self.model_file):
             self.model.load_weights(self.model_file)
+            return True
+        return False
 
     def save_weights(self):
         """Save the model weights to a file"""
@@ -159,7 +166,7 @@ class ModelBuilder(object):
 # Episode method
 # ---------------------------------------------------------------------------
 
-def run_episode(name="", epochs=100, board_height=4, board_width=4,
+def run_episode(name=None, epochs=100, board_height=4, board_width=4,
                 verbose=False):
     """Run an episode (several epochs)"""
 
@@ -260,7 +267,12 @@ def run_episode(name="", epochs=100, board_height=4, board_width=4,
     if not os.path.exists(stats_directory):
         os.mkdir(stats_directory)
 
-    statistics_file = os.path.join(stats_directory, f"stats{name}.csv")
+    if name:
+        suffix = f"-{name}"
+    else:
+        suffix = ""
+
+    statistics_file = os.path.join(stats_directory, f"stats{suffix}.csv")
 
     # Load previous data (or create an empty dataset)
     if os.path.exists(statistics_file):

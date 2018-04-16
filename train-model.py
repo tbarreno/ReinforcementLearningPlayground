@@ -28,7 +28,7 @@ if __name__ == "__main__":
                 print(f"=== Size {board_size}x{board_size} | Run {run} | "
                       f"Episode {episode:03d}/{episodes:03d} ===")
 
-                episode_name=f"-{board_size}x{board_size}-r{run:02d}"
+                episode_name=f"{board_size}x{board_size}-r{run:02d}"
 
                 learning.run_episode(name=episode_name,
                                      epochs=epochs,

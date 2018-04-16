@@ -53,8 +53,12 @@ class SeekGame(object):
         self.movements = []
 
         # A random point over the board
-        self.target_x = random.randint(0, self.width - 1)
-        self.target_y = random.randint(0, self.height - 1)
+        # self.target_x = random.randint(0, self.width - 1)
+        # self.target_y = random.randint(0, self.height - 1)
+
+        # Put the target at the center
+        self.target_x = self.width // 2
+        self.target_y = self.height // 2
 
         # Look for a free point (avoiding the target possition)
         found_point = False
